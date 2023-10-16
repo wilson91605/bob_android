@@ -8,7 +8,6 @@ import android.view.View;
 
 
 public abstract class StaticFragment extends Fragment {
-
     public interface ShowListener {
         void onShow(View[] views);
     }
