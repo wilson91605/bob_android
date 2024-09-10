@@ -29,7 +29,7 @@ public class EntryObjectDetectFragment extends StaticFragment{
         TextView definition = (TextView) root.findViewById(R.id.inter_obj_detect_definition);
         definition.setText(this.definition);
         //修改嫦娥發音 ; 將填空區"_____"當成字串分割符號
-        String[] word = definition.getText().toString().replace("Chang E","Chaung' er.").split("_____");
+        String[] word = definition.getText().toString().replace("Chang E","Chaung' er.").replace("Qu Yuan","Chuyuán.").split("_____");
         //多線程念句子
         Executor threadPool = Executors.newFixedThreadPool(1);
         threadPool.execute(() -> {

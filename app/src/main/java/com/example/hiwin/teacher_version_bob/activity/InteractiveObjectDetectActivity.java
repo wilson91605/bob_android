@@ -11,9 +11,12 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.hiwin.teacher_version_bob.R;
+import com.example.hiwin.teacher_version_bob.StoryAdapter;
+import com.example.hiwin.teacher_version_bob.objectAdapter;
 import com.example.hiwin.teacher_version_bob.fragment.*;
 
 import org.json.JSONArray;
@@ -21,6 +24,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.LinkedList;
+import java.util.UUID;
 
 import static com.example.hiwin.teacher_version_bob.Constants.getResourceIDByString;
 
@@ -59,12 +63,13 @@ public class InteractiveObjectDetectActivity extends BluetoothCommunicationActiv
 
 //            內容類型
             String content = json.getString("content");
-
-            if (content.equals("all_objects")) {
-//                如果接收到所有物件資訊
+            if (content.equals("all_objects_info")) {
+                JSONArray array = json.getJSONArray("data");
+                postFragment_obj(getSelectFragment(array));
+            }
+            else if (content.equals("objects_content")) {
 
                 JSONArray raw = json.getJSONArray("data");
-
 //                全部物品陣列
                 objects = new JSONArray();
 
@@ -72,13 +77,14 @@ public class InteractiveObjectDetectActivity extends BluetoothCommunicationActiv
                     objects.put(raw.getJSONObject(i));
                 }
 //
+                selectNewAnswer();
 //                重置資料
                 reset();
 
 //               通知主控制器開始物品辨識
                 sendMessage("OBJECT_DETECTOR ENABLE");
-
-            } else if (content.equals("single_object")) {
+            }
+            else if (content.equals("single_object")) {
                 if(answer==null)
                     return;
 //                如果接收到實際辨識到的物件
@@ -122,8 +128,6 @@ public class InteractiveObjectDetectActivity extends BluetoothCommunicationActiv
             } else {
                 throw new IllegalStateException("Unknown state");
             }
-
-
         } catch (IllegalArgumentException | JSONException e) {
             Log.e(THIS_LOG_TAG, e.getMessage());
         }
@@ -195,7 +199,7 @@ public class InteractiveObjectDetectActivity extends BluetoothCommunicationActiv
     @Override
     protected void onConnect() {
 //        抓取所有物件資料
-        sendMessage("DB_GET_ALL");
+        sendMessage("DB_GET_ALL LIST");
     }
 
     @Override
@@ -235,6 +239,34 @@ public class InteractiveObjectDetectActivity extends BluetoothCommunicationActiv
         fragmentTransaction.replace(R.id.inter_obj_detect_frame, fragment, id);
         fragmentTransaction.commit();
     }
+    private Fragment getSelectFragment(JSONArray array) {
+        objectSelectFragment selectFragment = new objectSelectFragment();
+        selectFragment.setShowListener(views -> ((ListView) views[0]).setAdapter(new objectAdapter(this, array)));
+        selectFragment.setSelectListener(new objectSelectFragment.ItemSelectListener() {
 
+            @Override
+            public void onItemSelected(int position) {
+                try {
+                    JSONObject selectedObject = array.getJSONObject(position);
+                    try {
+                        String id = selectedObject.getString("story");
+                        sendMessage("DB_GET_ALL object " + id);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        return selectFragment;
+    }
+    private void postFragment_obj(Fragment fragment) {
+        if (fragment == null) return;
 
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.setReorderingAllowed(true);
+        fragmentTransaction.replace(R.id.inter_obj_detect_frame, fragment, UUID.randomUUID().toString());
+        fragmentTransaction.commit();
+    }
 }
