@@ -205,6 +205,7 @@ public class InteractiveObjectDetectActivity extends BluetoothCommunicationActiv
     @Override
     protected void onDisconnect() {
         sendMessage("STOP_DETECT");
+        sendMessage("OBJECT_DETECTOR DISABLE");
     }
 
     @Override
